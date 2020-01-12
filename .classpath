@@ -14,5 +14,8 @@
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.web.container"/>
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.module.container"/>
 	<classpathentry kind="lib" path="D:/documents/users/saarzeev/Downloads/ojdbc6.jar"/>
+	<classpathentry kind="lib" path="D:/documents/users/saarzeev/Downloads/bson-3.2.2.jar"/>
+	<classpathentry kind="lib" path="D:/documents/users/saarzeev/Downloads/mongodb-driver-3.2.2.jar"/>
+	<classpathentry kind="lib" path="D:/documents/users/saarzeev/Downloads/mongodb-driver-core-3.2.2.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>

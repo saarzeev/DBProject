@@ -43,7 +43,6 @@ public class ItemsController extends ParentController {
 	 private Connection connection;
 	
 	public ItemsController() {
-		//jdbc:oracle:thin:@132.72.65.216:1521/ORACLE", "saarzeev", "abcd"
 		 try {
              Class.forName("oracle.jdbc.driver.OracleDriver");
              this.connection = DriverManager.getConnection("jdbc:oracle:thin:@132.72.65.216:1521/ORACLE", "saarzeev", "abcd");
@@ -62,6 +61,25 @@ public class ItemsController extends ParentController {
 	public void fillMediaItems(HttpServletResponse response){
 		System.out.println("was here");
 		//:TODO your implementation
+		List<Long> mediaItems = new ArrayList<Long>();
+        ResultSet rs = null;
+        PreparedStatement ps = null;
+        try {
+            ps = this.connection.prepareStatement("SELECT TITLE, PROD_YEAR FROM MEDIAITEMS");
+            rs = ps.executeQuery();
+            while ( rs.next() ) {
+            	System.out.println(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }finally {
+            try {
+                rs.close();
+                ps.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
 		HttpStatus status = HttpStatus.OK;
 		response.setStatus(status.value());
 	} 
