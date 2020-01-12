@@ -10,12 +10,19 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.bgu.ise.ddb.MediaItems;
 import org.bgu.ise.ddb.ParentController;
+import org.bgu.ise.ddb.User;
+import org.bson.Document;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.mongodb.MongoClient;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
+import com.mongodb.client.MongoDatabase;
 
 import javafx.util.Pair;
 
@@ -40,17 +47,32 @@ import static oracle.jdbc.OracleTypes.STRUCT;
 @RestController
 @RequestMapping(value = "/items")
 public class ItemsController extends ParentController {
-	 private Connection connection;
+	private Connection oracleConnection;
+	private MongoClient mongoConnection;
+	private MongoDatabase database;
+	private MongoCollection<Document> coll;
+
+	private void openOracleConnection() {
+		try {
+            Class.forName("oracle.jdbc.driver.OracleDriver");
+            this.oracleConnection = DriverManager.getConnection("jdbc:oracle:thin:@132.72.65.216:1521/ORACLE", "saarzeev", "abcd");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+	}
 	
-	public ItemsController() {
-		 try {
-             Class.forName("oracle.jdbc.driver.OracleDriver");
-             this.connection = DriverManager.getConnection("jdbc:oracle:thin:@132.72.65.216:1521/ORACLE", "saarzeev", "abcd");
-         } catch (ClassNotFoundException e) {
-             e.printStackTrace();
-         } catch (SQLException e) {
-             e.printStackTrace();
-         }
+	private void openMongoConnection() {
+		try {
+			mongoConnection = new MongoClient("127.0.0.1", 27017);
+			database = mongoConnection.getDatabase("dbProject");
+			coll = database.getCollection("Mediaitems");
+			System.out.println("Connection Established");
+		} catch (Exception e) {
+			e.printStackTrace();
+			mongoConnection.close();
+		}
 	}
 	
 	/**
@@ -60,15 +82,20 @@ public class ItemsController extends ParentController {
 	@RequestMapping(value = "fill_media_items", method={RequestMethod.GET})
 	public void fillMediaItems(HttpServletResponse response){
 		System.out.println("was here");
-		//:TODO your implementation
-		List<Long> mediaItems = new ArrayList<Long>();
+		openOracleConnection();
+		openMongoConnection();
+		
         ResultSet rs = null;
         PreparedStatement ps = null;
         try {
-            ps = this.connection.prepareStatement("SELECT TITLE, PROD_YEAR FROM MEDIAITEMS");
+            ps = this.oracleConnection.prepareStatement("SELECT TITLE, PROD_YEAR  FROM MEDIAITEMS");
             rs = ps.executeQuery();
             while ( rs.next() ) {
-            	System.out.println(rs);
+            	String title = rs.getString("TITLE");
+            	int prodYear = rs.getInt("PROD_YEAR");
+            	Document newMediaItem = new Document("title", title).append("prod_year", prodYear);
+
+     			coll.insertOne(newMediaItem);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -80,6 +107,13 @@ public class ItemsController extends ParentController {
                 e.printStackTrace();
             }
         }
+        
+        mongoConnection.close();
+        try {
+			oracleConnection.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 		HttpStatus status = HttpStatus.OK;
 		response.setStatus(status.value());
 	} 
@@ -113,10 +147,28 @@ public class ItemsController extends ParentController {
 	@ResponseBody
 	@org.codehaus.jackson.map.annotate.JsonView(MediaItems.class)
 	public  MediaItems[] getTopNItems(@RequestParam("topn")    int topN){
-		//:TODO your implementation
-		MediaItems m = new MediaItems("Game of Thrones", 2011);
-		System.out.println(m);
-		return new MediaItems[]{m};
+
+		openMongoConnection();
+		
+		List<MediaItems> mediaItems = new ArrayList<MediaItems>();
+		
+		MongoCursor<Document> cursor = coll.find().limit(topN).iterator();
+		try {           
+		    while (cursor.hasNext()) {
+		    	Document mediaItemDoc = cursor.next();
+
+				String title = mediaItemDoc.getString("title");
+				Integer prodYear = mediaItemDoc.getInteger("prod_year");
+				
+				mediaItems.add(new MediaItems(title, prodYear.intValue()));   
+		    }
+		} finally {
+		    cursor.close();
+		}
+		
+		mongoConnection.close();
+
+		return mediaItems.toArray(new MediaItems[mediaItems.size()]);
 	}
 		
 
