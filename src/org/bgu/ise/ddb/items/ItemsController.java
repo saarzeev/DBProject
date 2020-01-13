@@ -138,7 +138,7 @@ public class ItemsController extends ParentController {
 		String line = "";
 
 		try {
-			br = new BufferedReader(new BufferedReader(new InputStreamReader(url.openStream())));
+			br = new BufferedReader(new InputStreamReader(url.openStream()));
 			while ((line = br.readLine()) != null) {
 				
 				String[] tuple = line.split(",");
