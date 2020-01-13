@@ -4,7 +4,8 @@
 package org.bgu.ise.ddb.items;
 
 import java.io.IOException;
-
+import java.io.InputStreamReader;
+import java.net.URL;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -34,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.mongodb.client.model.Filters.eq;
 import static java.lang.Integer.parseInt;
 import static oracle.jdbc.OracleTypes.NUMBER;
 import static oracle.jdbc.OracleTypes.STRUCT;
@@ -81,7 +83,7 @@ public class ItemsController extends ParentController {
 	 */
 	@RequestMapping(value = "fill_media_items", method={RequestMethod.GET})
 	public void fillMediaItems(HttpServletResponse response){
-		System.out.println("was here");
+
 		openOracleConnection();
 		openMongoConnection();
 		
@@ -93,9 +95,10 @@ public class ItemsController extends ParentController {
             while ( rs.next() ) {
             	String title = rs.getString("TITLE");
             	int prodYear = rs.getInt("PROD_YEAR");
-            	Document newMediaItem = new Document("title", title).append("prod_year", prodYear);
-
-     			coll.insertOne(newMediaItem);
+            	if(!isItemExists(title)) {
+            		Document newMediaItem = new Document("title", title).append("prod_year", prodYear);
+         			coll.insertOne(newMediaItem);
+            	}
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -129,14 +132,54 @@ public class ItemsController extends ParentController {
 	@RequestMapping(value = "fill_media_items_from_url", method={RequestMethod.GET})
 	public void fillMediaItemsFromUrl(@RequestParam("url")    String urladdress,
 			HttpServletResponse response) throws IOException{
-		System.out.println(urladdress);
-		
-		//:TODO your implementation
+
+		URL url = new URL(urladdress);
+		BufferedReader br = null;
+		String line = "";
+
+		try {
+			br = new BufferedReader(new BufferedReader(new InputStreamReader(url.openStream())));
+			while ((line = br.readLine()) != null) {
+				
+				String[] tuple = line.split(",");
+				String title= tuple[0];
+				String prodYearStr=tuple[1];
+				
+				try {
+					int prodYear = Integer.parseInt(prodYearStr);
+					if(!isItemExists(title))
+					{
+						openMongoConnection();
+						
+						Document newMediaItem = new Document("title", title).append("prod_year", prodYear);
+		     			coll.insertOne(newMediaItem);
+						
+						mongoConnection.close();
+					}
+					
+				} catch (Exception e) {
+					e.printStackTrace();;
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();;
+		}
+
 		HttpStatus status = HttpStatus.OK;
 		response.setStatus(status.value());
 	}
 	
 	
+	private boolean isItemExists(String title) {
+		openMongoConnection();
+		
+		Document myDoc = coll.find(eq("title", title)).first();
+		
+		mongoConnection.close();
+		
+		return myDoc != null;
+	}
+
 	/**
 	 * The function retrieves from the system storage N items,
 	 * order is not important( any N items) 
