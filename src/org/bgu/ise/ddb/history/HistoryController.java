@@ -3,7 +3,6 @@
  */
 package org.bgu.ise.ddb.history;
 
-import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 
 import java.io.IOException;
