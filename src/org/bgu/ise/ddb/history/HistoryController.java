@@ -6,6 +6,7 @@ package org.bgu.ise.ddb.history;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -16,7 +17,10 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.bgu.ise.ddb.ParentController;
 import org.bgu.ise.ddb.User;
+import org.bgu.ise.ddb.items.ItemsController;
+import org.bgu.ise.ddb.registration.RegistarationController;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -24,12 +28,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.operation.OrderBy;
+import static com.mongodb.client.model.Sorts.*;
 
 /**
  * @author Alex
@@ -68,16 +71,26 @@ public class HistoryController extends ParentController{
 			@RequestParam("title")   String title,
 			HttpServletResponse response){
 		
-		openConnection();
+		RegistarationController regController = new RegistarationController();
+		ItemsController itemController = new ItemsController();
 		
-		System.out.println(username+" "+title);
-		Document newHistory = new Document("username", username)
-									.append("title", title)
-									.append("viewtime", System.currentTimeMillis());
+		try {
+			if(regController.isExistUser(username) && itemController.isTitleExists(title)) {
+				
+				openConnection();
+				
+				Document newHistory = new Document("username", username)
+						.append("title", title)
+						.append("viewtime", System.currentTimeMillis());
 
-		coll.insertOne(newHistory);
+				coll.insertOne(newHistory);
+				
+				mongoConnection.close();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		
-		mongoConnection.close();
 		HttpStatus status = HttpStatus.OK;
 		response.setStatus(status.value());
 	}
@@ -104,12 +117,13 @@ public class HistoryController extends ParentController{
 	private HistoryPair[] findInHistoryByField(String fieldValue, String wantedCredential, String searchByField) {
 		
 		openConnection();
-		MongoCursor<Document> cursor = coll.find(eq(searchByField, fieldValue)).sort(new BasicDBObject("viewtime", OrderBy.DESC)).iterator();		
+		Bson descending = descending("viewtime");
+		MongoCursor<Document> cursor = coll.find(eq(searchByField, fieldValue)).sort(descending).iterator();		
 		
 		List<HistoryPair> historyPair = new ArrayList<HistoryPair>();
 		
 		try {           
-		    while (cursor.hasNext()) {
+		    while (cursor != null && cursor.hasNext()) {
 		    	Document historyDoc = cursor.next();
 		    	
 		    	String credential = historyDoc.getString(wantedCredential);
@@ -160,14 +174,15 @@ public class HistoryController extends ParentController{
 		
 		for(HistoryPair h : pairs) {
 			String username = h.getCredentials();
-			
 			Document userDoc = this.coll.find(eq("username", username)).first();
 
-			//String password = userDoc.getString("password");
-			String firstName = userDoc.getString("firstname");
-			String lastName = userDoc.getString("lastname");
-			
-			users.add(new User(username/*, password*/, firstName, lastName));    
+			if(userDoc != null) { 
+				//String password = userDoc.getString("password");
+				String firstName = userDoc.getString("firstname");
+				String lastName = userDoc.getString("lastname");
+				
+				users.add(new User(username/*, password*/, firstName, lastName));    
+			}
 		}
 		
 		return users.toArray(new User[users.size()]);

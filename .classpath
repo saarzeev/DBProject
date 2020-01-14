@@ -8,10 +8,10 @@
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.web.container"/>
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.module.container"/>
-	<classpathentry kind="lib" path="C:/Users/Saar/git/DBProject/WebContent/WEB-INF/lib/bson-3.2.2.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Saar/git/DBProject/WebContent/WEB-INF/lib/mongodb-driver-3.2.2.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Saar/git/DBProject/WebContent/WEB-INF/lib/mongodb-driver-core-3.2.2.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Saar/git/DBProject/WebContent/WEB-INF/lib/ojdbc6.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="D:/documents/users/saarzeev/project/WebContent/WEB-INF/lib/bson-3.2.2.jar"/>
+	<classpathentry kind="lib" path="D:/documents/users/saarzeev/project/WebContent/WEB-INF/lib/mongodb-driver-3.2.2.jar"/>
+	<classpathentry kind="lib" path="D:/documents/users/saarzeev/project/WebContent/WEB-INF/lib/mongodb-driver-core-3.2.2.jar"/>
+	<classpathentry kind="lib" path="D:/documents/users/saarzeev/project/WebContent/WEB-INF/lib/ojdbc6.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>

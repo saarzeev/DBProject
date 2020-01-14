@@ -5,6 +5,7 @@ package org.bgu.ise.ddb.registration;
 
 import java.io.IOException;
 import com.mongodb.MongoClient;
+import com.mongodb.MongoClientOptions;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 
@@ -55,7 +56,8 @@ public class RegistarationController extends ParentController {
 
 	private void openConnection() {
 		try {
-			mongoConnection = new MongoClient("127.0.0.1", 27017);
+			MongoClientOptions settings = MongoClientOptions.builder().codecRegistry(com.mongodb.MongoClient.getDefaultCodecRegistry()).build();
+			mongoConnection = new MongoClient(new ServerAddress("localhost", 27017), settings);
 			database = mongoConnection.getDatabase("dbProject");
 			coll = database.getCollection("Users");
 			System.out.println("Connection Established");

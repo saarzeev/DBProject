@@ -121,6 +121,14 @@ public class ItemsController extends ParentController {
 		response.setStatus(status.value());
 	} 
 	
+	public boolean isTitleExists(String title) {
+		openMongoConnection();
+		
+		Document myDoc = coll.find(eq("title", title)).first();
+		
+		mongoConnection.close();
+		return myDoc != null;
+	}
 	
 
 	/**
